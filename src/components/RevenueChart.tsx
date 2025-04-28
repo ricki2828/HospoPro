@@ -4,14 +4,18 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
+  ChartData,
+  TooltipItem,
+  Tick
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { Revenue } from '../types';
+import { Chart } from 'react-chartjs-2';
+import { RevenueChartDataPoint } from '../pages/Dashboard';
 import { format, parseISO } from 'date-fns';
 
 ChartJS.register(
@@ -19,6 +23,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -26,44 +31,65 @@ ChartJS.register(
 );
 
 interface RevenueChartProps {
-  revenueData: Revenue[];
+  data: RevenueChartDataPoint[];
 }
 
-export default function RevenueChart({ revenueData }: RevenueChartProps) {
-  const data = {
-    labels: revenueData.map((item) => format(parseISO(item.date), 'EEE dd MMM')),
+export default function RevenueChart({ data: chartInputData }: RevenueChartProps) {
+  const data: ChartData<any> = {
+    labels: chartInputData.map((item) => format(parseISO(item.date), 'EEE dd MMM')),
     datasets: [
       {
+        type: 'line' as const,
         label: 'Actual Revenue',
-        data: revenueData.map((item) => item.amount),
+        data: chartInputData.map((item) => item.amount),
         borderColor: '#4338CA',
         backgroundColor: '#4338CA',
-        pointRadius: 4,
+        pointRadius: 3,
         tension: 0.2,
+        yAxisID: 'y',
+        order: 1,
       },
       {
+        type: 'line' as const,
         label: 'Forecast',
-        data: revenueData.map((item) => item.forecast || null),
+        data: chartInputData.map((item) => item.forecast || null),
         borderColor: '#0D9488',
         backgroundColor: '#0D9488',
-        pointRadius: 4,
+        pointRadius: 3,
         pointStyle: 'triangle',
         tension: 0.2,
         borderDash: [5, 5],
+        yAxisID: 'y',
+        order: 1,
       },
       {
+        type: 'line' as const,
         label: 'Baseline',
-        data: revenueData.map((item) => item.baseline),
+        data: chartInputData.map((item) => item.baseline),
         borderColor: '#F59E0B',
         backgroundColor: 'rgba(245, 158, 11, 0.1)',
         pointRadius: 0,
         tension: 0.2,
         fill: true,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'bar' as const,
+        label: 'Staff Count',
+        data: chartInputData.map((item) => item.staffCount),
+        backgroundColor: 'rgba(156, 163, 175, 0.4)',
+        borderColor: 'rgba(156, 163, 175, 0.6)',
+        borderWidth: 1,
+        yAxisID: 'y1',
+        order: 3,
+        barPercentage: 0.6,
+        categoryPercentage: 0.7,
       },
     ],
   };
 
-  const options: ChartOptions<'line'> = {
+  const options: ChartOptions<any> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -74,18 +100,53 @@ export default function RevenueChart({ revenueData }: RevenueChartProps) {
       tooltip: {
         mode: 'index',
         intersect: false,
+        callbacks: {
+          label: function(context: TooltipItem<any>) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              if (context.dataset.yAxisID === 'y') {
+                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+              } else {
+                label += context.parsed.y + ' Staff';
+              }
+            }
+            return label;
+          }
+        }
       },
     },
     scales: {
       y: {
+        type: 'linear' as const,
+        display: true,
+        position: 'left' as const,
         beginAtZero: false,
         grid: {
           display: true,
           drawBorder: false,
+          drawOnChartArea: true,
         },
         ticks: {
-          callback: function(value) {
-            return '$' + value;
+          callback: function(value: string | number) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value));
+          },
+        },
+      },
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        beginAtZero: true,
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          precision: 0,
+          callback: function(value: string | number) {
+            return Number(value).toFixed(0) + ' Staff';
           },
         },
       },
@@ -104,7 +165,7 @@ export default function RevenueChart({ revenueData }: RevenueChartProps) {
 
   return (
     <div className="h-80">
-      <Line data={data} options={options} />
+      <Chart type='bar' data={data} options={options} />
     </div>
   );
 }

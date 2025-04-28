@@ -15,8 +15,19 @@ import {
   weatherData, 
   promos, 
   bookings,
-  forecastData
+  forecastData,
+  mockShifts
 } from '../services/mockData';
+import { format, parseISO } from 'date-fns';
+
+// Define a type for the combined chart data
+export interface RevenueChartDataPoint {
+  date: string;
+  amount?: number;
+  baseline?: number;
+  forecast?: number;
+  staffCount?: number;
+}
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
@@ -34,6 +45,23 @@ export default function Dashboard() {
   const todayBookings = bookings.filter(b => 
     b.date === new Date().toISOString().split('T')[0]
   ).reduce((sum, b) => sum + b.partySize, 0);
+
+  // --- Calculate staff count per day ---
+  const staffCountPerDay = mockShifts.reduce((acc, shift) => {
+    const date = shift.date; // Already in yyyy-MM-dd format
+    if (!acc[date]) {
+      acc[date] = new Set<string>();
+    }
+    acc[date].add(shift.staffId);
+    return acc;
+  }, {} as Record<string, Set<string>>);
+
+  // --- Combine revenue data with staff counts ---
+  const combinedRevenueData: RevenueChartDataPoint[] = revenueData.map(rev => ({
+    ...rev,
+    date: rev.date, // Ensure date is string
+    staffCount: staffCountPerDay[rev.date]?.size || 0, // Get count from the Set, default to 0
+  }));
 
   // Get upcoming forecast
   const upcomingForecasts = forecastData.slice(0, 4);
@@ -107,7 +135,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="px-4 py-5 sm:p-6">
-          <RevenueChart revenueData={revenueData} />
+          <RevenueChart data={combinedRevenueData} />
         </div>
       </div>
 
