@@ -7,6 +7,7 @@ import Promotions from './pages/Promotions';
 import Bookings from './pages/Bookings';
 import Analytics from './pages/Analytics';
 import Forecasting from './pages/Forecasting';
+import Roster from './pages/Roster';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
@@ -19,6 +20,7 @@ function App() {
         <Route path="bookings" element={<Bookings />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="forecasting" element={<Forecasting />} />
+        <Route path="roster" element={<Roster />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>

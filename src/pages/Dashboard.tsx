@@ -9,6 +9,7 @@ import WeatherForecast from '../components/WeatherForecast';
 import UpcomingPromotions from '../components/UpcomingPromotions';
 import BookingsList from '../components/BookingsList';
 import ForecastCard from '../components/ForecastCard';
+import RosterSummaryCard from '../components/RosterSummaryCard';
 import { 
   revenueData, 
   weatherData, 
@@ -134,6 +135,9 @@ export default function Dashboard() {
               <UpcomingPromotions promotions={promos} />
             </div>
           </div>
+
+          {/* Roster Summary */}
+          <RosterSummaryCard />
         </div>
 
         <div className="lg:col-span-2 space-y-6">

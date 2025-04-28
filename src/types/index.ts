@@ -61,3 +61,26 @@ export interface Forecast {
     promos: number;
   };
 }
+
+export type Team = 'Kitchen' | 'Front of House' | 'Management';
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  team: Team;
+}
+
+export interface Shift {
+  id: string;
+  staffId: string;
+  startTime: Date;
+  endTime: Date;
+  date: string; // Store as YYYY-MM-DD string for consistency
+}
+
+// Represents the roster for a specific period (e.g., a week)
+export interface RosterData {
+  startDate: Date;
+  endDate: Date;
+  shifts: Shift[];
+}

@@ -1,5 +1,5 @@
-import { Promo, Booking, Revenue, WeatherData, DayOfWeekTrend, Forecast } from '../types';
-import { addDays, format, subDays, startOfDay } from 'date-fns';
+import { Promo, Booking, Revenue, WeatherData, DayOfWeekTrend, Forecast, StaffMember, Shift } from '../types';
+import { addDays, format, subDays, startOfDay, setHours, setMinutes } from 'date-fns';
 
 // Helper function to create dates
 const createDate = (daysFromToday: number) => {
@@ -348,3 +348,49 @@ export const forecastData: Forecast[] = [
     },
   },
 ];
+
+// Mock Staff Members
+export const staffMembers: StaffMember[] = [
+  // Kitchen
+  { id: 'k1', name: 'Alice Chef', team: 'Kitchen' },
+  { id: 'k2', name: 'Bob Sous-Chef', team: 'Kitchen' },
+  { id: 'k3', name: 'Charlie Cook', team: 'Kitchen' },
+  { id: 'k4', name: 'Diana Dishwasher', team: 'Kitchen' },
+  // Front of House
+  { id: 'f1', name: 'Eve Waitress', team: 'Front of House' },
+  { id: 'f2', name: 'Frank Waiter', team: 'Front of House' },
+  { id: 'f3', name: 'Grace Host', team: 'Front of House' },
+  { id: 'f4', name: 'Henry Bartender', team: 'Front of House' },
+  { id: 'f5', name: 'Ivy Barback', team: 'Front of House' },
+  // Management
+  { id: 'm1', name: 'Judy Manager', team: 'Management' },
+  { id: 'm2', name: 'Ken Assistant Manager', team: 'Management' },
+];
+
+// Mock roster data
+// Helper to create specific Date objects for shifts
+const createShiftTime = (daysFromToday: number, hour: number, minute: number): Date => {
+  const baseDate = addDays(startOfDay(new Date()), daysFromToday);
+  return setMinutes(setHours(baseDate, hour), minute);
+};
+
+export const mockShifts: Shift[] = [
+  // Today (Day 0)
+  { id: 's1', staffId: 'k1', date: createDate(0), startTime: createShiftTime(0, 8, 0), endTime: createShiftTime(0, 16, 0) }, // Alice Chef 8am-4pm
+  { id: 's2', staffId: 'k3', date: createDate(0), startTime: createShiftTime(0, 15, 0), endTime: createShiftTime(0, 23, 0) }, // Charlie Cook 3pm-11pm
+  { id: 's3', staffId: 'f1', date: createDate(0), startTime: createShiftTime(0, 11, 0), endTime: createShiftTime(0, 19, 0) }, // Eve Waitress 11am-7pm
+  { id: 's4', staffId: 'f2', date: createDate(0), startTime: createShiftTime(0, 17, 0), endTime: createShiftTime(0, 23, 30) }, // Frank Waiter 5pm-11:30pm
+  { id: 's5', staffId: 'f4', date: createDate(0), startTime: createShiftTime(0, 16, 0), endTime: createShiftTime(0, 0, 0) }, // Henry Bartender 4pm-12am (ends next day technically, handle display)
+  { id: 's6', staffId: 'm1', date: createDate(0), startTime: createShiftTime(0, 9, 0), endTime: createShiftTime(0, 17, 0) }, // Judy Manager 9am-5pm
+  
+  // Tomorrow (Day 1)
+  { id: 's7', staffId: 'k2', date: createDate(1), startTime: createShiftTime(1, 9, 0), endTime: createShiftTime(1, 17, 0) }, // Bob Sous-Chef 9am-5pm
+  { id: 's8', staffId: 'k3', date: createDate(1), startTime: createShiftTime(1, 15, 0), endTime: createShiftTime(1, 23, 0) }, // Charlie Cook 3pm-11pm
+  { id: 's9', staffId: 'f1', date: createDate(1), startTime: createShiftTime(1, 11, 0), endTime: createShiftTime(1, 19, 0) }, // Eve Waitress 11am-7pm
+  { id: 's10', staffId: 'f3', date: createDate(1), startTime: createShiftTime(1, 17, 0), endTime: createShiftTime(1, 22, 0) }, // Grace Host 5pm-10pm
+  { id: 's11', staffId: 'm2', date: createDate(1), startTime: createShiftTime(1, 14, 0), endTime: createShiftTime(1, 22, 0) }, // Ken Asst Manager 2pm-10pm
+];
+
+// // Mock roster data (example for today)
+// // In a real app, this would be more dynamic, fetched, and cover a range
+// // We can add Shifts here later when building the roster page
