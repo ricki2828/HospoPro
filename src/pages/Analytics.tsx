@@ -125,6 +125,9 @@ export default function Analytics() {
     }
   };
 
+  // Log the length before rendering
+  console.log(`[Render] weatherImpact length: ${weatherImpact.length} for timeRange: ${timeRange}`);
+
   return (
     <div className="space-y-6">
       <div>
