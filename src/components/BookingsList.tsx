@@ -58,7 +58,7 @@ export default function BookingsList({ bookings, viewMode }: BookingsListProps) 
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {upcomingBookings.slice(0, 5).map((booking) => (
+            {(viewMode === 'week' ? upcomingBookings.slice(0, 5) : upcomingBookings).map((booking) => (
               <tr key={booking.id} className="hover:bg-gray-50">
                 <td className="px-3 py-2 whitespace-nowrap text-sm">
                   <div className="font-medium text-gray-900">

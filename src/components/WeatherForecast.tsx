@@ -8,7 +8,7 @@ interface WeatherForecastProps {
 }
 
 export default function WeatherForecast({ weatherData, viewMode }: WeatherForecastProps) {
-  const displayData = weatherData.slice(0, 7);
+  const displayData = viewMode === 'week' ? weatherData.slice(0, 7) : weatherData;
 
   const getWeatherIcon = (icon: string) => {
     switch (icon) {
@@ -26,7 +26,7 @@ export default function WeatherForecast({ weatherData, viewMode }: WeatherForeca
   };
 
   return (
-    <div className={`grid gap-2 ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+    <div className="grid grid-cols-7 gap-2">
       {displayData.map((day) => (
         <div
           key={day.date}

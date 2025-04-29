@@ -43,8 +43,8 @@ export const fetchWeatherData = async (): Promise<WeatherData[]> => {
     }
 
     // Transform the daily data (usually 8 days including today)
-    // Let's take 7 days starting from today to match the previous mock structure
-    const transformedData = data.daily.slice(0, 7).map((day: any): WeatherData => ({
+    // Remove the slice to return all available days
+    const transformedData = data.daily.map((day: any): WeatherData => ({
       date: format(fromUnixTime(day.dt), 'yyyy-MM-dd'),
       description: day.weather[0]?.description || 'N/A',
       icon: mapIcon(day.weather[0]?.icon || ''),

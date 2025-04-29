@@ -42,7 +42,8 @@ export default function UpcomingPromotions({ promotions, viewMode }: UpcomingPro
 
   return (
     <div className="space-y-3">
-      {upcomingPromos.slice(0, 3).map((promo) => (
+      {/* Show 3 for week, up to 6 for month */}
+      {upcomingPromos.slice(0, viewMode === 'week' ? 3 : 6).map((promo) => (
         <div
           key={promo.id}
           className="bg-white p-3 rounded-lg shadow-sm border-l-4 hover:shadow-md transition"
