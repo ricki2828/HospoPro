@@ -39,6 +39,24 @@ interface RevenueChartProps {
   viewMode: 'week' | 'month';
 }
 
+// Helper function to get weather emoji
+const getWeatherEmoji = (icon?: string): string => {
+  if (!icon) return '';
+  switch (icon) {
+    case 'sun': return '☀️';
+    case 'moon': return '🌙'; // Assuming 'moon' might be used for night
+    case 'cloud-sun': return '⛅️';
+    case 'cloud-moon': return '☁️🌙'; // Placeholder
+    case 'cloud': return '☁️';
+    case 'cloud-drizzle': return '🌦️';
+    case 'cloud-rain': return '🌧️';
+    case 'cloud-lightning': return '⛈️';
+    case 'snowflake': return '❄️';
+    case 'cloud-fog': return '🌫️';
+    default: return '';
+  }
+};
+
 export default function RevenueChart({ data: chartInputData, viewMode }: RevenueChartProps) {
   const filteredData = chartInputData.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
   let displayData: RevenueChartDataPoint[];
@@ -50,7 +68,7 @@ export default function RevenueChart({ data: chartInputData, viewMode }: Revenue
   }
 
   const data: ChartData<any> = {
-    labels: displayData.map((item) => format(parseISO(item.date), viewMode === 'week' ? 'EEE dd MMM' : 'dd MMM')),
+    labels: displayData.map(item => item.date),
     datasets: [
       {
         type: 'line' as const,
@@ -179,6 +197,25 @@ export default function RevenueChart({ data: chartInputData, viewMode }: Revenue
         grid: {
           display: false,
         },
+        ticks: {
+          callback: function(this: Tick, tickValue: string | number, index: number): string | string[] {
+            const dateStr = displayData[index]?.date;
+            if (!dateStr) return '';
+
+            const dateLabel = format(parseISO(dateStr), viewMode === 'week' ? 'EEE dd MMM' : 'dd MMM');
+            
+            const weatherIcon = displayData[index]?.weatherIcon;
+            const emoji = getWeatherEmoji(weatherIcon);
+
+            return [dateLabel, emoji];
+          },
+          font: {
+             size: 11, 
+          },
+           maxRotation: 0,
+           minRotation: 0,
+           autoSkip: false,
+        },
       },
     },
     interaction: {
@@ -189,7 +226,7 @@ export default function RevenueChart({ data: chartInputData, viewMode }: Revenue
   };
 
   return (
-    <div className="h-80">
+    <div className="h-96">
       <Chart type='bar' data={data} options={options} />
     </div>
   );

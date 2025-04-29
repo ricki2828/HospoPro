@@ -93,6 +93,7 @@ export interface RevenueChartDataPoint {
   forecast?: number;
   staffCount?: number;
   lastYearAmount?: number; // Add last year's revenue
+  weatherIcon?: string; // Add optional weather icon identifier
 }
 
 // --- Food Safety Types ---

@@ -33,6 +33,12 @@ export default function Dashboard() {
   const [liveWeatherData, setLiveWeatherData] = useState<WeatherData[]>([]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
 
+  // Create a weather icon lookup map
+  const weatherIconMap = new Map<string, string>();
+  liveWeatherData.forEach(day => {
+    weatherIconMap.set(day.date, day.icon);
+  });
+
   // --- Fetch live weather data on mount ---
   useEffect(() => {
     const loadWeatherData = async () => {
@@ -77,19 +83,17 @@ export default function Dashboard() {
     lastYearDataMap.set(data.date, data);
   });
 
-  // --- Combine revenue data with staff counts and last year data ---
+  // --- Combine revenue data with staff counts, last year data, and weather ---
   const combinedRevenueData: RevenueChartDataPoint[] = revenueData.map(rev => {
-    // Calculate the date one year ago from the current data point's date
     const dateOneYearAgo = format(subYears(parseISO(rev.date), 1), 'yyyy-MM-dd');
-    // Find the corresponding data from last year using the calculated date
     const lastYearData = lastYearDataMap.get(dateOneYearAgo);
 
     return {
       ...rev,
       date: rev.date,
       staffCount: staffCountPerDay[rev.date]?.size || 0,
-      // Assign the amount from the found last year data point
       lastYearAmount: lastYearData?.amount,
+      weatherIcon: weatherIconMap.get(rev.date), // Get weather icon from map
     };
   });
 
