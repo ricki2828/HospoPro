@@ -48,42 +48,39 @@ export default function Analytics() {
   
   // Calculate Weather Impact based on timeRange
   const weatherImpact = useMemo(() => {
-    const impactData: WeatherImpactRow[] = []; // Use explicit type
+    console.log(`--- Recalculating weatherImpact for timeRange: ${timeRange} ---`); // Log recalculation
+    const impactData: WeatherImpactRow[] = [];
     const now = startOfDay(new Date());
     const daysToShow = timeRange === 'week' ? 7 : 30;
     const startDate = subDays(now, daysToShow - 1);
     const dateInterval = { start: startDate, end: now };
+    console.log(`Date Range: ${format(startDate, 'yyyy-MM-dd')} to ${format(now, 'yyyy-MM-dd')} (${daysToShow} days)`); // Log range
 
-    // Iterate over the actual date range
-    eachDayOfInterval(dateInterval).forEach(date => {
+    const datesInRange = eachDayOfInterval(dateInterval);
+    console.log(`Iterating over ${datesInRange.length} dates.`); // Log loop length
+    let foundDataCount = 0; // Counter for valid data points
+
+    datesInRange.forEach(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
-      // Look up data for this specific date
       const currentRevenue = allRevenueMap.get(dateStr);
       const weatherDay = allWeatherDataMap.get(dateStr); 
-        
-      // Check if we have both weather and revenue data for this date
+              
       if (weatherDay && currentRevenue && typeof currentRevenue.amount === 'number' && currentRevenue.amount > 0 && currentRevenue.baseline > 0) {
+        foundDataCount++; // Increment counter
         const difference = ((currentRevenue.amount - currentRevenue.baseline) / currentRevenue.baseline) * 100;
-            
         let lastYearRevenue: number | null = null;
         let threeYearAvgRevenue: number | null = null;
-
-        // Calculate historicals (can be done regardless of view, just shown conditionally later)
         const dateYearMinus1 = format(subYears(date, 1), 'yyyy-MM-dd');
         const dateYearMinus2 = format(subYears(date, 2), 'yyyy-MM-dd');
         const dateYearMinus3 = format(subYears(date, 3), 'yyyy-MM-dd');
-
         const revY1 = allRevenueMap.get(dateYearMinus1)?.amount;
         const revY2 = allRevenueMap.get(dateYearMinus2)?.amount;
         const revY3 = allRevenueMap.get(dateYearMinus3)?.amount;
-
         lastYearRevenue = revY1 ?? null;
-
         const pastRevenues = [revY1, revY2, revY3].filter(r => typeof r === 'number') as number[];
         if (pastRevenues.length > 0) {
             threeYearAvgRevenue = pastRevenues.reduce((sum, r) => sum + r, 0) / pastRevenues.length;
         }
-        
         impactData.push({
           date: dateStr,
           weather: weatherDay.description,
@@ -97,11 +94,13 @@ export default function Analytics() {
           threeYearAvgRevenue: threeYearAvgRevenue
         });
       }
-    }); // End of loop through date range
+    }); 
     
-    // Sort by date descending for display
-    return impactData.sort((a, b) => b.date.localeCompare(a.date));
-  }, [timeRange, allWeatherDataMap]); // Dependency includes allWeatherDataMap now
+    console.log(`Found ${foundDataCount} valid data points.`); // Log found count
+    const sortedData = impactData.sort((a, b) => b.date.localeCompare(a.date));
+    console.log(`Final impactData length: ${sortedData.length}`); // Log final length
+    return sortedData;
+  }, [timeRange, allWeatherDataMap]);
 
   // Calculate top performing promos
   const topPromos = [...promos]
