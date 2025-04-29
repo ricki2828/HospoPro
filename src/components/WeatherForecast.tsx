@@ -38,7 +38,7 @@ export default function WeatherForecast({ weatherData, viewMode }: WeatherForeca
           <div className="my-2">{getWeatherIcon(day.icon)}</div>
           <p className="text-sm font-semibold">{day.temperature}°C</p>
           {day.precipitation > 0 && (
-            <p className="text-xs text-primary-600">{day.precipitation} mm</p>
+            <p className="text-xs text-primary-600">{Math.round(day.precipitation)} mm</p>
           )}
         </div>
       ))}

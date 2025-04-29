@@ -20,7 +20,7 @@ const WeatherInfo: React.FC<{ weather?: WeatherData }> = ({ weather }) => {
   // Basic emoji mapping (could reuse from RevenueChart or enhance)
   const emojiMap: Record<string, string> = { 'sun': '☀️', 'cloud': '☁️', 'cloud-rain': '🌧️', 'cloud-sun': '⛅️', 'cloud-drizzle': '🌦️' /* add others */ };
   return (
-    <span title={`${weather.description}, ${weather.precipitation}mm`}>
+    <span title={`${weather.description}, ${Math.round(weather.precipitation)}mm`}>
       {emojiMap[weather.icon] || '❔'} {weather.temperature}°C
     </span>
   );
