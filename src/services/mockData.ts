@@ -418,9 +418,9 @@ const generateShiftsForDay = (dayOffset: number): Shift[] => {
   return generatedShifts;
 };
 
-// Generate mock shifts for the last 30 days up to tomorrow
+// Generate mock shifts from 30 days ago up to 14 days in the future
 const shifts: Shift[] = [];
-for (let i = -30; i <= 1; i++) {
+for (let i = -30; i <= 14; i++) {
   shifts.push(...generateShiftsForDay(i));
 }
 export const mockShifts: Shift[] = shifts;
