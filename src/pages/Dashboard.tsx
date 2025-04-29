@@ -29,7 +29,7 @@ const formatNZD = (value: number) => {
 };
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [liveWeatherData, setLiveWeatherData] = useState<WeatherData[]>([]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
 
@@ -93,8 +93,10 @@ export default function Dashboard() {
     };
   });
 
-  // Get upcoming forecast
-  const upcomingForecasts = forecastData.slice(0, 4);
+  // Get upcoming forecast based on viewMode
+  const upcomingForecasts = viewMode === 'week' 
+    ? forecastData.slice(0, 4) // Show 4 days for week view
+    : forecastData.slice(0, 14); // Show 14 days for month view
 
   return (
     <div className="space-y-8">
@@ -142,22 +144,22 @@ export default function Dashboard() {
               <button
                 type="button"
                 className={`px-4 py-2 text-sm font-medium border ${
-                  timeRange === 'week'
+                  viewMode === 'week'
                     ? 'bg-primary-50 text-primary-700 border-primary-200'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
-                onClick={() => setTimeRange('week')}
+                onClick={() => setViewMode('week')}
               >
                 Week
               </button>
               <button
                 type="button"
                 className={`px-4 py-2 text-sm font-medium border border-l-0 ${
-                  timeRange === 'month'
+                  viewMode === 'month'
                     ? 'bg-primary-50 text-primary-700 border-primary-200'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
-                onClick={() => setTimeRange('month')}
+                onClick={() => setViewMode('month')}
               >
                 Month
               </button>
@@ -165,7 +167,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="px-4 py-5 sm:p-6">
-          <RevenueChart data={combinedRevenueData} />
+          <RevenueChart data={combinedRevenueData} viewMode={viewMode} />
         </div>
       </div>
 
@@ -175,14 +177,16 @@ export default function Dashboard() {
           {/* Weather Section */}
           <div className="bg-white shadow rounded-lg overflow-hidden min-h-[200px]">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900">7-Day Weather</h2>
+              <h2 className="text-lg font-medium text-gray-900">
+                {viewMode === 'week' ? '7-Day Weather' : 'Monthly Weather'}
+              </h2>
               <Droplets className="h-5 w-5 text-gray-400" />
             </div>
             <div className="p-4">
               {isLoadingWeather ? (
                 <p className="text-gray-500 text-sm">Loading weather...</p>
               ) : liveWeatherData.length > 0 ? (
-                <WeatherForecast weatherData={liveWeatherData} />
+                <WeatherForecast weatherData={liveWeatherData} viewMode={viewMode} />
               ) : (
                 <p className="text-gray-500 text-sm">Could not load weather data.</p>
               )}
@@ -196,7 +200,7 @@ export default function Dashboard() {
               <Calendar className="h-5 w-5 text-gray-400" />
             </div>
             <div className="p-4">
-              <UpcomingPromotions promotions={promos} />
+              <UpcomingPromotions promotions={promos} viewMode={viewMode} />
             </div>
           </div>
 
@@ -214,15 +218,17 @@ export default function Dashboard() {
               <h2 className="text-lg font-medium text-gray-900">Upcoming Bookings</h2>
               <Clock className="h-5 w-5 text-gray-400" />
             </div>
-            <BookingsList bookings={bookings} />
+            <BookingsList bookings={bookings} viewMode={viewMode} />
           </div>
 
           {/* Forecast Cards */}
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-3">Revenue Forecast</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-3">
+              Revenue Forecast ({viewMode === 'week' ? 'Next 4 Days' : 'Next 14 Days'})
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {upcomingForecasts.map((forecast) => (
-                <ForecastCard key={forecast.date} forecast={forecast} />
+                <ForecastCard key={forecast.date} forecast={forecast} viewMode={viewMode} />
               ))}
             </div>
           </div>

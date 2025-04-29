@@ -1,14 +1,23 @@
 import { Booking } from '../types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays, isWithinInterval, startOfDay } from 'date-fns';
 
 interface BookingsListProps {
   bookings: Booking[];
+  viewMode: 'week' | 'month';
 }
 
-export default function BookingsList({ bookings }: BookingsListProps) {
-  const sortedBookings = [...bookings].sort((a, b) =>
+export default function BookingsList({ bookings, viewMode }: BookingsListProps) {
+  const allSortedBookings = [...bookings].sort((a, b) =>
     `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
   );
+
+  const now = startOfDay(new Date());
+  const endPeriod = viewMode === 'week' ? addDays(now, 7) : addDays(now, 30);
+
+  const upcomingBookings = allSortedBookings.filter(booking => {
+    const bookingDate = parseISO(booking.date);
+    return isWithinInterval(bookingDate, { start: now, end: endPeriod });
+  });
 
   return (
     <div className="overflow-hidden">
@@ -49,7 +58,7 @@ export default function BookingsList({ bookings }: BookingsListProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {sortedBookings.slice(0, 5).map((booking) => (
+            {upcomingBookings.slice(0, 5).map((booking) => (
               <tr key={booking.id} className="hover:bg-gray-50">
                 <td className="px-3 py-2 whitespace-nowrap text-sm">
                   <div className="font-medium text-gray-900">
@@ -84,9 +93,9 @@ export default function BookingsList({ bookings }: BookingsListProps) {
           </tbody>
         </table>
       </div>
-      {sortedBookings.length === 0 && (
+      {upcomingBookings.length === 0 && (
         <div className="py-4 text-center text-sm text-gray-500">
-          No upcoming bookings
+          No upcoming bookings {viewMode === 'week' ? 'this week' : 'this month'}
         </div>
       )}
       <div className="border-t border-gray-200 bg-gray-50 px-4 py-2 text-right">

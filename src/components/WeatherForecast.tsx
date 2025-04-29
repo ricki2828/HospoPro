@@ -4,9 +4,12 @@ import { format, parseISO } from 'date-fns';
 
 interface WeatherForecastProps {
   weatherData: WeatherData[];
+  viewMode: 'week' | 'month';
 }
 
-export default function WeatherForecast({ weatherData }: WeatherForecastProps) {
+export default function WeatherForecast({ weatherData, viewMode }: WeatherForecastProps) {
+  const displayData = weatherData.slice(0, 7);
+
   const getWeatherIcon = (icon: string) => {
     switch (icon) {
       case 'cloud':
@@ -23,8 +26,8 @@ export default function WeatherForecast({ weatherData }: WeatherForecastProps) {
   };
 
   return (
-    <div className="grid grid-cols-7 gap-2">
-      {weatherData.map((day) => (
+    <div className={`grid gap-2 ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+      {displayData.map((day) => (
         <div
           key={day.date}
           className="flex flex-col items-center p-2 bg-white rounded-lg shadow-sm transition hover:shadow-md"

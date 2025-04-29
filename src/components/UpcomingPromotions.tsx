@@ -1,12 +1,13 @@
 import { Promo } from '../types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays, isWithinInterval, startOfDay } from 'date-fns';
 import { Clock, Music, Tag, Calendar, Award } from 'lucide-react';
 
 interface UpcomingPromotionsProps {
   promotions: Promo[];
+  viewMode: 'week' | 'month';
 }
 
-export default function UpcomingPromotions({ promotions }: UpcomingPromotionsProps) {
+export default function UpcomingPromotions({ promotions, viewMode }: UpcomingPromotionsProps) {
   const getPromoIcon = (type: string) => {
     switch (type) {
       case 'Happy Hour':
@@ -24,14 +25,24 @@ export default function UpcomingPromotions({ promotions }: UpcomingPromotionsPro
     }
   };
 
-  // Sort promotions by date
+  // Sort promotions by start date
   const sortedPromos = [...promotions].sort((a, b) => 
     parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()
   );
 
+  // Filter promotions based on viewMode
+  const now = startOfDay(new Date());
+  const endPeriod = viewMode === 'week' ? addDays(now, 7) : addDays(now, 30);
+
+  const upcomingPromos = sortedPromos.filter(promo => {
+    const startDate = parseISO(promo.startDate);
+    // Check if the promo starts between now and the end of the period
+    return isWithinInterval(startDate, { start: now, end: endPeriod });
+  });
+
   return (
     <div className="space-y-3">
-      {sortedPromos.slice(0, 3).map((promo) => (
+      {upcomingPromos.slice(0, 3).map((promo) => (
         <div
           key={promo.id}
           className="bg-white p-3 rounded-lg shadow-sm border-l-4 hover:shadow-md transition"

@@ -4,9 +4,10 @@ import { TrendingUp, Users, Calendar, CloudRain } from 'lucide-react';
 
 interface ForecastCardProps {
   forecast: Forecast;
+  viewMode: 'week' | 'month';
 }
 
-export default function ForecastCard({ forecast }: ForecastCardProps) {
+export default function ForecastCard({ forecast, viewMode }: ForecastCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 transition hover:shadow-md">
       <div className="flex justify-between items-start">

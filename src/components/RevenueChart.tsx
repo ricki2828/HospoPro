@@ -18,7 +18,7 @@ import {
 } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 import { RevenueChartDataPoint } from '../types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfMonth, isWithinInterval } from 'date-fns';
 
 ChartJS.register(
   CategoryScale,
@@ -36,16 +36,26 @@ ChartJS.register(
 
 interface RevenueChartProps {
   data: RevenueChartDataPoint[];
+  viewMode: 'week' | 'month';
 }
 
-export default function RevenueChart({ data: chartInputData }: RevenueChartProps) {
+export default function RevenueChart({ data: chartInputData, viewMode }: RevenueChartProps) {
+  const filteredData = chartInputData.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+  let displayData: RevenueChartDataPoint[];
+
+  if (viewMode === 'week') {
+    displayData = filteredData.slice(-7);
+  } else {
+    displayData = filteredData.slice(-30);
+  }
+
   const data: ChartData<any> = {
-    labels: chartInputData.map((item) => format(parseISO(item.date), 'EEE dd MMM')),
+    labels: displayData.map((item) => format(parseISO(item.date), viewMode === 'week' ? 'EEE dd MMM' : 'dd MMM')),
     datasets: [
       {
         type: 'line' as const,
         label: 'Actual Revenue',
-        data: chartInputData.map((item) => item.amount),
+        data: displayData.map((item) => item.amount),
         borderColor: '#4338CA',
         backgroundColor: '#4338CA',
         pointRadius: 3,
@@ -56,7 +66,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
       {
         type: 'line' as const,
         label: 'Last Year Revenue',
-        data: chartInputData.map((item) => item.lastYearAmount),
+        data: displayData.map((item) => item.lastYearAmount),
         borderColor: '#9CA3AF',
         borderDash: [4, 4],
         pointRadius: 0,
@@ -67,7 +77,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
       {
         type: 'line' as const,
         label: 'Forecast',
-        data: chartInputData.map((item) => item.forecast || null),
+        data: displayData.map((item) => item.forecast || null),
         borderColor: '#0D9488',
         backgroundColor: '#0D9488',
         pointRadius: 3,
@@ -80,7 +90,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
       {
         type: 'line' as const,
         label: 'Baseline',
-        data: chartInputData.map((item) => item.baseline),
+        data: displayData.map((item) => item.baseline),
         borderColor: '#F59E0B',
         backgroundColor: 'rgba(245, 158, 11, 0.1)',
         pointRadius: 0,
@@ -92,7 +102,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
       {
         type: 'bar' as const,
         label: 'Staff Count',
-        data: chartInputData.map((item) => item.staffCount),
+        data: displayData.map((item) => item.staffCount),
         backgroundColor: 'rgba(156, 163, 175, 0.4)',
         borderColor: 'rgba(156, 163, 175, 0.6)',
         borderWidth: 1,
