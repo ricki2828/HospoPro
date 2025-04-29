@@ -378,33 +378,52 @@ export const staffMembers: StaffMember[] = [
   { id: 'm2', name: 'Ken Assistant Manager', team: 'Management' },
 ];
 
-// Mock roster data
-// Helper to create specific Date objects for shifts
-const createShiftTime = (daysFromToday: number, hour: number, minute: number): Date => {
-  const baseDate = addDays(startOfDay(new Date()), daysFromToday);
-  return setMinutes(setHours(baseDate, hour), minute);
+// Helper function to generate plausible shifts for a given day
+const generateShiftsForDay = (dayOffset: number): Shift[] => {
+  const date = createDate(dayOffset);
+  const dayOfWeek = new Date(date).getDay(); // 0 = Sunday, 6 = Saturday
+  const generatedShifts: Shift[] = [];
+  let shiftIdCounter = dayOffset * 100; // Simple unique ID generation
+
+  // Example: Fewer staff on Mon/Tue, more on Fri/Sat
+  const isWeekend = dayOfWeek === 6 || dayOfWeek === 0;
+  const isQuietDay = dayOfWeek === 1 || dayOfWeek === 2;
+
+  // Kitchen Staff
+  generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'k1', date, startTime: createDateTime(dayOffset, 8, 0), endTime: createDateTime(dayOffset, 16, 0) }); // Always Alice
+  if (!isQuietDay) {
+    generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'k2', date, startTime: createDateTime(dayOffset, 9, 0), endTime: createDateTime(dayOffset, 17, 0) }); // Bob on busier days
+  }
+  generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'k3', date, startTime: createDateTime(dayOffset, 15, 0), endTime: createDateTime(dayOffset, 23, 0) }); // Always Charlie
+
+  // FOH Staff
+  generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'f1', date, startTime: createDateTime(dayOffset, 11, 0), endTime: createDateTime(dayOffset, 19, 0) }); // Always Eve
+  if (isWeekend || dayOfWeek === 5) { // Frank Fri/Sat/Sun
+    generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'f2', date, startTime: createDateTime(dayOffset, 17, 0), endTime: createDateTime(dayOffset, 23, 30) });
+  }
+  if (isWeekend) { // Grace Host Sat/Sun
+     generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'f3', date, startTime: createDateTime(dayOffset, 17, 0), endTime: createDateTime(dayOffset, 22, 0) });
+  }
+  if (!isQuietDay) { // Henry Bartender not Mon/Tue
+      generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'f4', date, startTime: createDateTime(dayOffset, 16, 0), endTime: createDateTime(dayOffset + (dayOfWeek === 6 ? 1 : 0), 0, 0) }); // Ends midnight, next day if Sat
+  }
+
+  // Management
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Judy Mon-Fri
+    generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'm1', date, startTime: createDateTime(dayOffset, 9, 0), endTime: createDateTime(dayOffset, 17, 0) });
+  } else { // Ken Sat/Sun
+     generatedShifts.push({ id: `s${shiftIdCounter++}`, staffId: 'm2', date, startTime: createDateTime(dayOffset, 14, 0), endTime: createDateTime(dayOffset, 22, 0) });
+  }
+
+  return generatedShifts;
 };
 
-export const mockShifts: Shift[] = [
-  // Today (Day 0)
-  { id: 's1', staffId: 'k1', date: createDate(0), startTime: createDateTime(0, 8, 0), endTime: createDateTime(0, 16, 0) }, // Alice Chef 8am-4pm
-  { id: 's2', staffId: 'k3', date: createDate(0), startTime: createDateTime(0, 15, 0), endTime: createDateTime(0, 23, 0) }, // Charlie Cook 3pm-11pm
-  { id: 's3', staffId: 'f1', date: createDate(0), startTime: createDateTime(0, 11, 0), endTime: createDateTime(0, 19, 0) }, // Eve Waitress 11am-7pm
-  { id: 's4', staffId: 'f2', date: createDate(0), startTime: createDateTime(0, 17, 0), endTime: createDateTime(0, 23, 30) }, // Frank Waiter 5pm-11:30pm
-  { id: 's5', staffId: 'f4', date: createDate(0), startTime: createDateTime(0, 16, 0), endTime: createDateTime(1, 0, 0) }, // Henry Bartender 4pm-12am (ends next day technically, handle display)
-  { id: 's6', staffId: 'm1', date: createDate(0), startTime: createDateTime(0, 9, 0), endTime: createDateTime(0, 17, 0) }, // Judy Manager 9am-5pm
-  
-  // Tomorrow (Day 1)
-  { id: 's7', staffId: 'k2', date: createDate(1), startTime: createDateTime(1, 9, 0), endTime: createDateTime(1, 17, 0) }, // Bob Sous-Chef 9am-5pm
-  { id: 's8', staffId: 'k3', date: createDate(1), startTime: createDateTime(1, 15, 0), endTime: createDateTime(1, 23, 0) }, // Charlie Cook 3pm-11pm
-  { id: 's9', staffId: 'f1', date: createDate(1), startTime: createDateTime(1, 11, 0), endTime: createDateTime(1, 19, 0) }, // Eve Waitress 11am-7pm
-  { id: 's10', staffId: 'f3', date: createDate(1), startTime: createDateTime(1, 17, 0), endTime: createDateTime(1, 22, 0) }, // Grace Host 5pm-10pm
-  { id: 's11', staffId: 'm2', date: createDate(1), startTime: createDateTime(1, 14, 0), endTime: createDateTime(1, 22, 0) }, // Ken Asst Manager 2pm-10pm
-];
-
-// // Mock roster data (example for today)
-// // In a real app, this would be more dynamic, fetched, and cover a range
-// // We can add Shifts here later when building the roster page
+// Generate mock shifts for the last 30 days up to tomorrow
+const shifts: Shift[] = [];
+for (let i = -30; i <= 1; i++) {
+  shifts.push(...generateShiftsForDay(i));
+}
+export const mockShifts: Shift[] = shifts;
 
 // --- Mock Last Year Revenue Data ---
 // Generate plausible data for the same date range as revenueData, but one year ago.
