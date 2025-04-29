@@ -17,7 +17,7 @@ import {
   Tick
 } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-import { RevenueChartDataPoint } from '../pages/Dashboard';
+import { RevenueChartDataPoint } from '../types';
 import { format, parseISO } from 'date-fns';
 
 ChartJS.register(
@@ -55,6 +55,17 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
       },
       {
         type: 'line' as const,
+        label: 'Last Year Revenue',
+        data: chartInputData.map((item) => item.lastYearAmount),
+        borderColor: '#9CA3AF',
+        borderDash: [4, 4],
+        pointRadius: 0,
+        tension: 0.2,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'line' as const,
         label: 'Forecast',
         data: chartInputData.map((item) => item.forecast || null),
         borderColor: '#0D9488',
@@ -76,7 +87,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
         tension: 0.2,
         fill: true,
         yAxisID: 'y',
-        order: 2,
+        order: 3,
       },
       {
         type: 'bar' as const,
@@ -86,7 +97,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
         borderColor: 'rgba(156, 163, 175, 0.6)',
         borderWidth: 1,
         yAxisID: 'y1',
-        order: 3,
+        order: 4,
         barPercentage: 0.6,
         categoryPercentage: 0.7,
       },

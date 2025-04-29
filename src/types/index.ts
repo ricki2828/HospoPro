@@ -28,7 +28,7 @@ export interface Booking {
 
 export interface Revenue {
   date: string;
-  amount: number;
+  amount?: number;
   baseline: number;
   forecast?: number;
 }
@@ -92,4 +92,5 @@ export interface RevenueChartDataPoint {
   baseline?: number;
   forecast?: number;
   staffCount?: number;
+  lastYearAmount?: number; // Add last year's revenue
 }

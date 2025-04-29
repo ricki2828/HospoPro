@@ -15,11 +15,12 @@ import {
   promos, 
   bookings,
   forecastData,
-  mockShifts
+  mockShifts,
+  lastYearRevenueData
 } from '../services/mockData';
 import { fetchWeatherData } from '../services/weatherService';
-import { format, parseISO } from 'date-fns';
-import { RevenueChartDataPoint, WeatherData } from '../types';
+import { format, parseISO, subYears } from 'date-fns';
+import { RevenueChartDataPoint, WeatherData, Revenue } from '../types';
 
 // Helper function for NZD formatting
 const formatNZD = (value: number) => {
@@ -69,12 +70,27 @@ export default function Dashboard() {
     return acc;
   }, {} as Record<string, Set<string>>);
 
-  // --- Combine revenue data with staff counts ---
-  const combinedRevenueData: RevenueChartDataPoint[] = revenueData.map(rev => ({
-    ...rev,
-    date: rev.date, // Ensure date is string
-    staffCount: staffCountPerDay[rev.date]?.size || 0, // Get count from the Set, default to 0
-  }));
+  // --- Create a lookup map for last year's data by date string ---
+  const lastYearDataMap = new Map<string, Revenue>();
+  lastYearRevenueData.forEach(data => {
+    lastYearDataMap.set(data.date, data);
+  });
+
+  // --- Combine revenue data with staff counts and last year data ---
+  const combinedRevenueData: RevenueChartDataPoint[] = revenueData.map(rev => {
+    // Calculate the date one year ago from the current data point's date
+    const dateOneYearAgo = format(subYears(parseISO(rev.date), 1), 'yyyy-MM-dd');
+    // Find the corresponding data from last year using the calculated date
+    const lastYearData = lastYearDataMap.get(dateOneYearAgo);
+
+    return {
+      ...rev,
+      date: rev.date,
+      staffCount: staffCountPerDay[rev.date]?.size || 0,
+      // Assign the amount from the found last year data point
+      lastYearAmount: lastYearData?.amount,
+    };
+  });
 
   // Get upcoming forecast
   const upcomingForecasts = forecastData.slice(0, 4);
@@ -82,8 +98,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500">Revenue overview and forecast</p>
+        <h1 className="text-2xl font-bold text-gray-900">Botanic Dashboard</h1>
+        <p className="text-sm text-gray-500">Revenue overview and forecast for Botanic</p>
       </div>
 
       {/* Top Cards */}

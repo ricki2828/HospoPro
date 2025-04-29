@@ -1,14 +1,18 @@
 import { Promo, Booking, Revenue, WeatherData, DayOfWeekTrend, Forecast, StaffMember, Shift } from '../types';
-import { addDays, format, subDays, startOfDay, setHours, setMinutes } from 'date-fns';
+import { addDays, format, subDays, startOfDay, setHours, setMinutes, subYears, parseISO } from 'date-fns';
 
 // Helper function to create dates
-const createDate = (daysFromToday: number) => {
+const createDate = (daysFromToday: number): string => {
   return format(
-    daysFromToday >= 0 
-      ? addDays(startOfDay(new Date()), daysFromToday)
-      : subDays(startOfDay(new Date()), Math.abs(daysFromToday)),
+    addDays(startOfDay(new Date()), daysFromToday),
     'yyyy-MM-dd'
   );
+};
+
+// Helper function to create Date objects
+const createDateTime = (daysFromToday: number, hour: number = 0, minute: number = 0): Date => {
+  const baseDate = addDays(startOfDay(new Date()), daysFromToday);
+  return setMinutes(setHours(baseDate, hour), minute);
 };
 
 // Mock promos
@@ -139,6 +143,13 @@ export const bookings: Booking[] = [
 
 // Mock revenue data
 export const revenueData: Revenue[] = [
+  { date: createDate(-13), amount: 3000, baseline: 2800 }, 
+  { date: createDate(-12), amount: 2700, baseline: 2600 },
+  { date: createDate(-11), amount: 3400, baseline: 3100 },
+  { date: createDate(-10), amount: 4000, baseline: 3700 },
+  { date: createDate(-9), amount: 4800, baseline: 4400 },
+  { date: createDate(-8), amount: 6000, baseline: 5400 },
+  { date: createDate(-7), amount: 5600, baseline: 4900 },
   { date: createDate(-6), amount: 3200, baseline: 3000 },
   { date: createDate(-5), amount: 2800, baseline: 2700 },
   { date: createDate(-4), amount: 3500, baseline: 3200 },
@@ -146,13 +157,13 @@ export const revenueData: Revenue[] = [
   { date: createDate(-2), amount: 5000, baseline: 4500 },
   { date: createDate(-1), amount: 6200, baseline: 5500 },
   { date: createDate(0), amount: 5800, baseline: 5000 },
-  { date: createDate(1), forecast: 4800, baseline: 4000, amount: 0 },
-  { date: createDate(2), forecast: 5200, baseline: 4600, amount: 0 },
-  { date: createDate(3), forecast: 3900, baseline: 3500, amount: 0 },
-  { date: createDate(4), forecast: 3200, baseline: 3000, amount: 0 },
-  { date: createDate(5), forecast: 4500, baseline: 4000, amount: 0 },
-  { date: createDate(6), forecast: 5500, baseline: 4800, amount: 0 },
-  { date: createDate(7), forecast: 6000, baseline: 5200, amount: 0 },
+  { date: createDate(1), forecast: 4800, baseline: 4000 },
+  { date: createDate(2), forecast: 5200, baseline: 4600 },
+  { date: createDate(3), forecast: 3900, baseline: 3500 },
+  { date: createDate(4), forecast: 3200, baseline: 3000 },
+  { date: createDate(5), forecast: 4500, baseline: 4000 },
+  { date: createDate(6), forecast: 5500, baseline: 4800 },
+  { date: createDate(7), forecast: 6000, baseline: 5200 },
 ];
 
 // Mock weather data
@@ -376,21 +387,39 @@ const createShiftTime = (daysFromToday: number, hour: number, minute: number): D
 
 export const mockShifts: Shift[] = [
   // Today (Day 0)
-  { id: 's1', staffId: 'k1', date: createDate(0), startTime: createShiftTime(0, 8, 0), endTime: createShiftTime(0, 16, 0) }, // Alice Chef 8am-4pm
-  { id: 's2', staffId: 'k3', date: createDate(0), startTime: createShiftTime(0, 15, 0), endTime: createShiftTime(0, 23, 0) }, // Charlie Cook 3pm-11pm
-  { id: 's3', staffId: 'f1', date: createDate(0), startTime: createShiftTime(0, 11, 0), endTime: createShiftTime(0, 19, 0) }, // Eve Waitress 11am-7pm
-  { id: 's4', staffId: 'f2', date: createDate(0), startTime: createShiftTime(0, 17, 0), endTime: createShiftTime(0, 23, 30) }, // Frank Waiter 5pm-11:30pm
-  { id: 's5', staffId: 'f4', date: createDate(0), startTime: createShiftTime(0, 16, 0), endTime: createShiftTime(0, 0, 0) }, // Henry Bartender 4pm-12am (ends next day technically, handle display)
-  { id: 's6', staffId: 'm1', date: createDate(0), startTime: createShiftTime(0, 9, 0), endTime: createShiftTime(0, 17, 0) }, // Judy Manager 9am-5pm
+  { id: 's1', staffId: 'k1', date: createDate(0), startTime: createDateTime(0, 8, 0), endTime: createDateTime(0, 16, 0) }, // Alice Chef 8am-4pm
+  { id: 's2', staffId: 'k3', date: createDate(0), startTime: createDateTime(0, 15, 0), endTime: createDateTime(0, 23, 0) }, // Charlie Cook 3pm-11pm
+  { id: 's3', staffId: 'f1', date: createDate(0), startTime: createDateTime(0, 11, 0), endTime: createDateTime(0, 19, 0) }, // Eve Waitress 11am-7pm
+  { id: 's4', staffId: 'f2', date: createDate(0), startTime: createDateTime(0, 17, 0), endTime: createDateTime(0, 23, 30) }, // Frank Waiter 5pm-11:30pm
+  { id: 's5', staffId: 'f4', date: createDate(0), startTime: createDateTime(0, 16, 0), endTime: createDateTime(1, 0, 0) }, // Henry Bartender 4pm-12am (ends next day technically, handle display)
+  { id: 's6', staffId: 'm1', date: createDate(0), startTime: createDateTime(0, 9, 0), endTime: createDateTime(0, 17, 0) }, // Judy Manager 9am-5pm
   
   // Tomorrow (Day 1)
-  { id: 's7', staffId: 'k2', date: createDate(1), startTime: createShiftTime(1, 9, 0), endTime: createShiftTime(1, 17, 0) }, // Bob Sous-Chef 9am-5pm
-  { id: 's8', staffId: 'k3', date: createDate(1), startTime: createShiftTime(1, 15, 0), endTime: createShiftTime(1, 23, 0) }, // Charlie Cook 3pm-11pm
-  { id: 's9', staffId: 'f1', date: createDate(1), startTime: createShiftTime(1, 11, 0), endTime: createShiftTime(1, 19, 0) }, // Eve Waitress 11am-7pm
-  { id: 's10', staffId: 'f3', date: createDate(1), startTime: createShiftTime(1, 17, 0), endTime: createShiftTime(1, 22, 0) }, // Grace Host 5pm-10pm
-  { id: 's11', staffId: 'm2', date: createDate(1), startTime: createShiftTime(1, 14, 0), endTime: createShiftTime(1, 22, 0) }, // Ken Asst Manager 2pm-10pm
+  { id: 's7', staffId: 'k2', date: createDate(1), startTime: createDateTime(1, 9, 0), endTime: createDateTime(1, 17, 0) }, // Bob Sous-Chef 9am-5pm
+  { id: 's8', staffId: 'k3', date: createDate(1), startTime: createDateTime(1, 15, 0), endTime: createDateTime(1, 23, 0) }, // Charlie Cook 3pm-11pm
+  { id: 's9', staffId: 'f1', date: createDate(1), startTime: createDateTime(1, 11, 0), endTime: createDateTime(1, 19, 0) }, // Eve Waitress 11am-7pm
+  { id: 's10', staffId: 'f3', date: createDate(1), startTime: createDateTime(1, 17, 0), endTime: createDateTime(1, 22, 0) }, // Grace Host 5pm-10pm
+  { id: 's11', staffId: 'm2', date: createDate(1), startTime: createDateTime(1, 14, 0), endTime: createDateTime(1, 22, 0) }, // Ken Asst Manager 2pm-10pm
 ];
 
 // // Mock roster data (example for today)
 // // In a real app, this would be more dynamic, fetched, and cover a range
 // // We can add Shifts here later when building the roster page
+
+// --- Mock Last Year Revenue Data ---
+// Generate plausible data for the same date range as revenueData, but one year ago.
+export const lastYearRevenueData: Revenue[] = revenueData.map(currentYearData => {
+  // Calculate the date one year ago
+  const lastYearDate = format(subYears(parseISO(currentYearData.date), 1), 'yyyy-MM-dd');
+  
+  // Generate a plausible last year amount (e.g., 90-110% of baseline, or slightly less than current amount)
+  const variationFactor = 0.9 + Math.random() * 0.2; // Random factor between 0.9 and 1.1
+  const lastYearAmount = Math.round((currentYearData.baseline || currentYearData.amount || 3000) * variationFactor);
+
+  return {
+    date: lastYearDate, // Store with the actual date from last year
+    amount: lastYearAmount,
+    // Baseline might also be different last year, but we'll keep it simple
+    baseline: Math.round((currentYearData.baseline || 3000) * 0.95) // Assume slightly lower baseline last year
+  };
+});
