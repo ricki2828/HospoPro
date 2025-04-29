@@ -63,8 +63,8 @@ export default function Sidebar({ onCloseSidebar }: SidebarProps) {
             <span className="text-primary-700 font-medium text-sm">NZ</span>
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-gray-700">The Craft Bar</p>
-            <p className="text-xs text-gray-500">Wellington, NZ</p>
+            <p className="text-sm font-medium text-gray-700">Botanic Bar</p>
+            <p className="text-xs text-gray-500">Christchurch, NZ</p>
           </div>
         </div>
       </div>

@@ -84,3 +84,12 @@ export interface RosterData {
   endDate: Date;
   shifts: Shift[];
 }
+
+// Type for combined data used in the main revenue chart
+export interface RevenueChartDataPoint {
+  date: string;
+  amount?: number; // Actual revenue
+  baseline?: number;
+  forecast?: number;
+  staffCount?: number;
+}

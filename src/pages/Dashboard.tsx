@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   DollarSign, CalendarDays, Users, TrendingUp,
   Clock, Calendar, Droplets
@@ -12,25 +12,35 @@ import ForecastCard from '../components/ForecastCard';
 import RosterSummaryCard from '../components/RosterSummaryCard';
 import { 
   revenueData, 
-  weatherData, 
   promos, 
   bookings,
   forecastData,
   mockShifts
 } from '../services/mockData';
+import { fetchWeatherData } from '../services/weatherService';
 import { format, parseISO } from 'date-fns';
+import { RevenueChartDataPoint, WeatherData } from '../types';
 
-// Define a type for the combined chart data
-export interface RevenueChartDataPoint {
-  date: string;
-  amount?: number;
-  baseline?: number;
-  forecast?: number;
-  staffCount?: number;
-}
+// Helper function for NZD formatting
+const formatNZD = (value: number) => {
+  return new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+};
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+  const [liveWeatherData, setLiveWeatherData] = useState<WeatherData[]>([]);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+
+  // --- Fetch live weather data on mount ---
+  useEffect(() => {
+    const loadWeatherData = async () => {
+      setIsLoadingWeather(true);
+      const data = await fetchWeatherData();
+      setLiveWeatherData(data);
+      setIsLoadingWeather(false);
+    };
+    loadWeatherData();
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const todayTotal = revenueData.find(d => d.date === new Date().toISOString().split('T')[0])?.amount || 0;
   const yesterdayTotal = revenueData.find(d => {
@@ -45,6 +55,9 @@ export default function Dashboard() {
   const todayBookings = bookings.filter(b => 
     b.date === new Date().toISOString().split('T')[0]
   ).reduce((sum, b) => sum + b.partySize, 0);
+
+  // Calculate weekly forecast total for card
+  const weeklyForecastTotal = forecastData.slice(0, 7).reduce((sum, d) => sum + d.expectedRevenue, 0);
 
   // --- Calculate staff count per day ---
   const staffCountPerDay = mockShifts.reduce((acc, shift) => {
@@ -77,13 +90,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard 
           title="Today's Revenue" 
-          value={`$${todayTotal}`} 
+          value={formatNZD(todayTotal)}
           icon={<DollarSign className="h-5 w-5" />}
           change={{ value: percentChange, type: percentChange >= 0 ? 'increase' : 'decrease' }}
         />
         <DashboardCard 
           title="Weekly Forecast" 
-          value={`$${forecastData.slice(0, 7).reduce((sum, d) => sum + d.expectedRevenue, 0)}`} 
+          value={formatNZD(weeklyForecastTotal)}
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <DashboardCard 
@@ -143,13 +156,19 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           {/* Weather Section */}
-          <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="bg-white shadow rounded-lg overflow-hidden min-h-[200px]">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-lg font-medium text-gray-900">7-Day Weather</h2>
               <Droplets className="h-5 w-5 text-gray-400" />
             </div>
             <div className="p-4">
-              <WeatherForecast weatherData={weatherData} />
+              {isLoadingWeather ? (
+                <p className="text-gray-500 text-sm">Loading weather...</p>
+              ) : liveWeatherData.length > 0 ? (
+                <WeatherForecast weatherData={liveWeatherData} />
+              ) : (
+                <p className="text-gray-500 text-sm">Could not load weather data.</p>
+              )}
             </div>
           </div>
 

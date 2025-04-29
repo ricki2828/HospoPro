@@ -7,9 +7,10 @@ export default function Settings() {
   const [testApiSuccess, setTestApiSuccess] = useState<boolean | null>(null);
 
   const [generalSettings, setGeneralSettings] = useState({
-    businessName: 'The Craft Bar',
-    address: '123 Lambton Quay',
-    city: 'Wellington',
+    businessName: 'Botanic Bar',
+    address: '123 Garden Lane',
+    city: 'Christchurch',
+    country: 'New Zealand',
     email: 'info@thecraftbar.co.nz',
     phone: '04 123 4567',
   });
@@ -129,6 +130,22 @@ export default function Settings() {
                   name="city"
                   id="city"
                   value={generalSettings.city}
+                  onChange={handleGeneralChange}
+                  className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-3">
+              <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                Country
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="country"
+                  id="country"
+                  value={generalSettings.country}
                   onChange={handleGeneralChange}
                   className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
                 />
@@ -371,8 +388,9 @@ export default function Settings() {
                   type="text"
                   name="location"
                   id="location"
-                  defaultValue="Wellington, NZ"
-                  className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  defaultValue="Christchurch, NZ"
+                  readOnly
                 />
               </div>
             </div>

@@ -112,7 +112,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
             }
             if (context.parsed.y !== null) {
               if (context.dataset.yAxisID === 'y') {
-                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                label += new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(context.parsed.y);
               } else {
                 label += context.parsed.y + ' Staff';
               }
@@ -135,7 +135,7 @@ export default function RevenueChart({ data: chartInputData }: RevenueChartProps
         },
         ticks: {
           callback: function(value: string | number) {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value));
+            return new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD', maximumFractionDigits: 0 }).format(Number(value));
           },
         },
       },
