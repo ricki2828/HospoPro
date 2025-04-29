@@ -44,8 +44,8 @@ export interface WeatherData {
 export interface DayOfWeekTrend {
   dayOfWeek: string;
   averageRevenue: number;
-  lastWeekRevenue: number;
-  trend: 'up' | 'down' | 'stable';
+  lastWeekRevenue?: number;
+  trend?: 'up' | 'down' | 'stable';
 }
 
 export interface Forecast {
@@ -107,6 +107,54 @@ export interface ComparisonDayData {
 export interface ComparisonData {
   selectedDay: ComparisonDayData;
   previousWeeks: ComparisonDayData[];
+}
+
+// --- Analytics View Data Types ---
+export interface WeeklyComparison {
+    dayOfWeek: string; // e.g., "Monday"
+    currentWeekRevenue: number;
+    previousWeekRevenue: number;
+}
+
+// Data for each day in the monthly comparison
+export interface MonthlyComparisonDay {
+    date: string; // YYYY-MM-DD
+    currentMonthRevenue?: number;
+    priorYearRevenue?: number;
+}
+
+// Structure for the entire monthly comparison
+export interface MonthlyComparisonData {
+    dailyData: MonthlyComparisonDay[];
+    currentMonthTotal: number;
+    priorYearMonthTotal: number;
+}
+
+// Data for each month in the yearly comparison
+export interface YearlyComparisonMonth {
+    month: string; // e.g., "Jan", "Feb"
+    ttmRevenue: number; // Trailing Twelve Month revenue for that month
+    priorYearRevenue: number; // Revenue for the corresponding month in the prior year
+}
+
+// Structure for the entire yearly comparison
+export interface YearlyComparisonData {
+    monthlyData: YearlyComparisonMonth[];
+    // Add overall totals if needed later
+}
+
+// Type for representing the impact of a single factor
+export interface FactorImpact {
+    factorName: string; // e.g., "Weather: Sunny", "Promo: Happy Hour", "Day: Saturday"
+    averageVariance: number; // Average % variance from baseline when this factor is present
+    // Optional: Add sample size (number of days) if useful
+    // sampleSize: number;
+}
+
+// Structure for the overall factor analysis results
+export interface FactorAnalysisResults {
+    topPositiveFactors: FactorImpact[];
+    topNegativeFactors: FactorImpact[];
 }
 
 // --- Food Safety Types ---
