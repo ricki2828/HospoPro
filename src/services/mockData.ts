@@ -141,8 +141,25 @@ export const bookings: Booking[] = [
   },
 ];
 
-// Mock revenue data
-export const revenueData: Revenue[] = [
+// Mock revenue data (current + forecast)
+export const currentRevenueData: Revenue[] = [
+  { date: createDate(-30), amount: 2500, baseline: 2800 }, // Add more history
+  { date: createDate(-29), amount: 2600, baseline: 2700 },
+  { date: createDate(-28), amount: 2700, baseline: 2900 },
+  { date: createDate(-27), amount: 3300, baseline: 3100 },
+  { date: createDate(-26), amount: 3800, baseline: 3500 },
+  { date: createDate(-25), amount: 4500, baseline: 4200 },
+  { date: createDate(-24), amount: 5500, baseline: 5000 },
+  { date: createDate(-23), amount: 5200, baseline: 4800 },
+  { date: createDate(-22), amount: 3100, baseline: 3000 },
+  { date: createDate(-21), amount: 2900, baseline: 2800 },
+  { date: createDate(-20), amount: 2800, baseline: 2900 },
+  { date: createDate(-19), amount: 3600, baseline: 3300 },
+  { date: createDate(-18), amount: 4100, baseline: 3700 },
+  { date: createDate(-17), amount: 4900, baseline: 4500 },
+  { date: createDate(-16), amount: 5900, baseline: 5400 },
+  { date: createDate(-15), amount: 5700, baseline: 5200 },
+  { date: createDate(-14), amount: 3300, baseline: 3100 }, 
   { date: createDate(-13), amount: 3000, baseline: 2800 }, 
   { date: createDate(-12), amount: 2700, baseline: 2600 },
   { date: createDate(-11), amount: 3400, baseline: 3100 },
@@ -425,23 +442,45 @@ for (let i = -30; i <= 14; i++) {
 }
 export const mockShifts: Shift[] = shifts;
 
-// --- Mock Last Year Revenue Data ---
-// Generate plausible data for the same date range as revenueData, but one year ago.
-export const lastYearRevenueData: Revenue[] = revenueData.map(currentYearData => {
-  // Calculate the date one year ago
-  const lastYearDate = format(subYears(parseISO(currentYearData.date), 1), 'yyyy-MM-dd');
-  
-  // Generate a plausible last year amount (e.g., 90-110% of baseline, or slightly less than current amount)
-  const variationFactor = 0.9 + Math.random() * 0.2; // Random factor between 0.9 and 1.1
-  const lastYearAmount = Math.round((currentYearData.baseline || currentYearData.amount || 3000) * variationFactor);
+// --- Generate Historical Revenue Data --- 
 
-  return {
-    date: lastYearDate, // Store with the actual date from last year
-    amount: lastYearAmount,
-    // Baseline might also be different last year, but we'll keep it simple
-    baseline: Math.round((currentYearData.baseline || 3000) * 0.95) // Assume slightly lower baseline last year
-  };
+// Helper to generate plausible revenue data for a specific year offset
+const generateRevenueForYear = (yearOffset: number, baseRevenueData: Revenue[]): Revenue[] => {
+  return baseRevenueData.map(currentYearData => {
+    const pastDate = format(subYears(parseISO(currentYearData.date), yearOffset), 'yyyy-MM-dd');
+    // Assume baseline was slightly lower in the past, decreases further back
+    const baselineAdjustment = 1 - (0.05 * yearOffset); 
+    const pastBaseline = Math.round((currentYearData.baseline || 3000) * baselineAdjustment);
+    // Generate amount based on past baseline with some variation
+    const variationFactor = (0.85 + Math.random() * 0.3); // Random factor 0.85 - 1.15
+    const pastAmount = Math.round(pastBaseline * variationFactor);
+
+    return {
+      date: pastDate,
+      amount: pastAmount,
+      baseline: pastBaseline, 
+    };
+  });
+};
+
+// Generate data for the last 3 years
+const revenueYearMinus1 = generateRevenueForYear(1, currentRevenueData);
+const revenueYearMinus2 = generateRevenueForYear(2, currentRevenueData);
+const revenueYearMinus3 = generateRevenueForYear(3, currentRevenueData);
+
+// Combine all revenue data into one array/map
+// Using a Map is efficient for lookups by date
+export const allRevenueMap = new Map<string, Revenue>();
+[...currentRevenueData, ...revenueYearMinus1, ...revenueYearMinus2, ...revenueYearMinus3].forEach(rev => {
+    // Only add if amount exists, prioritize more recent data if dates overlap (shouldn't with this gen method)
+    if (rev.amount !== undefined) {
+       allRevenueMap.set(rev.date, rev);
+    }
 });
+
+// Export for legacy use if needed (e.g., dashboard card still uses this?)
+export const revenueData = currentRevenueData;
+export const lastYearRevenueData = revenueYearMinus1; 
 
 // --- Mock Food Safety Tasks ---
 
