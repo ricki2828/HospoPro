@@ -96,6 +96,19 @@ export interface RevenueChartDataPoint {
   weatherIcon?: string; // Add optional weather icon identifier
 }
 
+// --- Comparison Data Types ---
+export interface ComparisonDayData {
+  date: string;
+  revenue?: number;
+  weather?: WeatherData;
+  promos: Promo[];
+}
+
+export interface ComparisonData {
+  selectedDay: ComparisonDayData;
+  previousWeeks: ComparisonDayData[];
+}
+
 // --- Food Safety Types ---
 
 export type TaskFrequency = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annually' | 'Once';

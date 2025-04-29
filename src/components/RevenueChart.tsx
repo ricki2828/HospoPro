@@ -13,12 +13,14 @@ import {
   Filler,
   ChartOptions,
   ChartData,
-  TooltipItem,
-  Tick
+  TooltipItem
 } from 'chart.js';
-import { Chart } from 'react-chartjs-2';
+import type { Tick, ActiveElement, ChartEvent } from 'chart.js';
+import { Chart, getElementsAtEvent } from 'react-chartjs-2';
 import { RevenueChartDataPoint } from '../types';
 import { format, parseISO, startOfWeek, endOfMonth, isWithinInterval } from 'date-fns';
+import { useRef } from 'react';
+import type { MouseEvent } from 'react';
 
 ChartJS.register(
   CategoryScale,
@@ -37,6 +39,7 @@ ChartJS.register(
 interface RevenueChartProps {
   data: RevenueChartDataPoint[];
   viewMode: 'week' | 'month';
+  onDateClick: (date: string) => void;
 }
 
 // Helper function to get weather emoji
@@ -57,7 +60,9 @@ const getWeatherEmoji = (icon?: string): string => {
   }
 };
 
-export default function RevenueChart({ data: chartInputData, viewMode }: RevenueChartProps) {
+export default function RevenueChart({ data: chartInputData, viewMode, onDateClick }: RevenueChartProps) {
+  const chartRef = useRef<ChartJS>(null);
+
   const filteredData = chartInputData.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
   let displayData: RevenueChartDataPoint[];
 
@@ -130,6 +135,19 @@ export default function RevenueChart({ data: chartInputData, viewMode }: Revenue
         categoryPercentage: 0.7,
       },
     ],
+  };
+
+  const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {
+    if (!chartRef.current) return;
+    const elements = getElementsAtEvent(chartRef.current, event);
+
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index;
+      const clickedDate = displayData[elementIndex]?.date;
+      if (clickedDate) {
+        onDateClick(clickedDate);
+      }
+    }
   };
 
   const options: ChartOptions<any> = {
@@ -227,7 +245,7 @@ export default function RevenueChart({ data: chartInputData, viewMode }: Revenue
 
   return (
     <div className="h-96">
-      <Chart type='bar' data={data} options={options} />
+      <Chart ref={chartRef} type='bar' data={data} options={options} onClick={handleClick} />
     </div>
   );
 }

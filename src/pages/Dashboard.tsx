@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   DollarSign, CalendarDays, Users, TrendingUp,
   Clock, Calendar, Droplets
@@ -20,8 +20,12 @@ import {
   lastYearRevenueData
 } from '../services/mockData';
 import { fetchWeatherData } from '../services/weatherService';
-import { format, parseISO, subYears } from 'date-fns';
-import { RevenueChartDataPoint, WeatherData, Revenue } from '../types';
+import { format, parseISO, subYears, subWeeks, getDay, startOfDay, endOfDay, isWithinInterval as dateFnsIsWithinInterval } from 'date-fns';
+import { RevenueChartDataPoint, WeatherData, Revenue, Promo, ComparisonData, ComparisonDayData } from '../types';
+import DateComparisonModal from '../components/DateComparisonModal';
+
+// Import the generated historical data
+import historicalWeatherData from '../data/historicalWeatherData.json';
 
 // Helper function for NZD formatting
 const formatNZD = (value: number) => {
@@ -32,23 +36,43 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [liveWeatherData, setLiveWeatherData] = useState<WeatherData[]>([]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const [comparisonDate, setComparisonDate] = useState<string | null>(null);
+  const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Create a weather icon lookup map
-  const weatherIconMap = new Map<string, string>();
-  liveWeatherData.forEach(day => {
-    weatherIconMap.set(day.date, day.icon);
-  });
+  // --- Combine live and historical weather data --- 
+  const allWeatherDataMap = useMemo(() => {
+    const map = new Map<string, WeatherData>();
+    // Load historical data first
+    (historicalWeatherData as WeatherData[]).forEach(day => {
+      map.set(day.date, day);
+    });
+    // Add/overwrite with live data (more recent)
+    liveWeatherData.forEach(day => {
+      map.set(day.date, day);
+    });
+    return map;
+  }, [liveWeatherData]); // Recalculate when live data updates
 
-  // --- Fetch live weather data on mount ---
+  // --- Fetch live weather data on mount --- 
   useEffect(() => {
     const loadWeatherData = async () => {
       setIsLoadingWeather(true);
       const data = await fetchWeatherData();
-      setLiveWeatherData(data);
+      setLiveWeatherData(data); // This will trigger re-calculation of allWeatherDataMap
       setIsLoadingWeather(false);
     };
     loadWeatherData();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
+
+  // Create a weather icon lookup map (using the combined map)
+  const weatherIconMap = useMemo(() => {
+      const iconMap = new Map<string, string>();
+      allWeatherDataMap.forEach((data, date) => {
+          iconMap.set(date, data.icon);
+      });
+      return iconMap;
+  }, [allWeatherDataMap]);
 
   const todayTotal = revenueData.find(d => d.date === new Date().toISOString().split('T')[0])?.amount || 0;
   const yesterdayTotal = revenueData.find(d => {
@@ -82,25 +106,109 @@ export default function Dashboard() {
   lastYearRevenueData.forEach(data => {
     lastYearDataMap.set(data.date, data);
   });
+  
+  // --- Combine revenue data (now also use combined weather map for icons) ---
+  // Let's also create a map for faster lookups later
+  const combinedRevenueDataMap = useMemo(() => {
+      const map = new Map<string, RevenueChartDataPoint>();
+      revenueData.forEach(rev => {
+          const dateOneYearAgo = format(subYears(parseISO(rev.date), 1), 'yyyy-MM-dd');
+          const lastYearData = lastYearDataMap.get(dateOneYearAgo);
+          const point: RevenueChartDataPoint = {
+              ...rev,
+              date: rev.date,
+              staffCount: staffCountPerDay[rev.date]?.size || 0,
+              lastYearAmount: lastYearData?.amount,
+              weatherIcon: weatherIconMap.get(rev.date), // Get from our combined weather map derived icon map
+          };
+          map.set(rev.date, point);
+      });
+       // Add forecast-only entries too if they exist beyond revenueData dates
+      forecastData.forEach(fcast => {
+        if (!map.has(fcast.date)) {
+          const dateOneYearAgo = format(subYears(parseISO(fcast.date), 1), 'yyyy-MM-dd');
+          const lastYearData = lastYearDataMap.get(dateOneYearAgo);
+          const point: RevenueChartDataPoint = {
+            date: fcast.date,
+            forecast: fcast.expectedRevenue,
+            baseline: 0, // Assume 0 if no direct revenue entry
+            staffCount: staffCountPerDay[fcast.date]?.size || 0,
+            lastYearAmount: lastYearData?.amount,
+            weatherIcon: weatherIconMap.get(fcast.date),
+          };
+          map.set(fcast.date, point);
+        }
+      });
+      return map;
+  }, [revenueData, forecastData, lastYearDataMap, staffCountPerDay, weatherIconMap]);
 
-  // --- Combine revenue data with staff counts, last year data, and weather ---
-  const combinedRevenueData: RevenueChartDataPoint[] = revenueData.map(rev => {
-    const dateOneYearAgo = format(subYears(parseISO(rev.date), 1), 'yyyy-MM-dd');
-    const lastYearData = lastYearDataMap.get(dateOneYearAgo);
-
-    return {
-      ...rev,
-      date: rev.date,
-      staffCount: staffCountPerDay[rev.date]?.size || 0,
-      lastYearAmount: lastYearData?.amount,
-      weatherIcon: weatherIconMap.get(rev.date), // Get weather icon from map
-    };
-  });
+  const combinedRevenueDataArray = useMemo(() => 
+      Array.from(combinedRevenueDataMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
+      [combinedRevenueDataMap]
+  );
 
   // Get upcoming forecast based on viewMode
   const upcomingForecasts = viewMode === 'week' 
     ? forecastData.slice(0, 4) // Show 4 days for week view
     : forecastData.slice(0, 14); // Show 14 days for month view
+
+  // --- Helper to find active promos for a date --- 
+  const getPromosForDate = (date: Date): Promo[] => {
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+    return promos.filter(promo => {
+        const promoStart = parseISO(promo.startDate);
+        const promoEnd = parseISO(promo.endDate);
+        // Check if the promo's interval overlaps with the target date
+        return dateFnsIsWithinInterval(start, { start: promoStart, end: promoEnd }) || 
+               dateFnsIsWithinInterval(end, { start: promoStart, end: promoEnd }) ||
+               (promoStart <= start && promoEnd >= end);
+    });
+  };
+
+  // --- Function to get data for a specific day --- 
+  const getDayData = (dateStr: string): ComparisonDayData => {
+      const revenuePoint = combinedRevenueDataMap.get(dateStr);
+      const weatherPoint = allWeatherDataMap.get(dateStr);
+      const dateObj = parseISO(dateStr);
+      const activePromos = getPromosForDate(dateObj);
+
+      return {
+          date: dateStr,
+          revenue: revenuePoint?.amount,
+          weather: weatherPoint,
+          promos: activePromos,
+      };
+  };
+
+  // --- Click Handler for Chart --- 
+  const handleDateClick = (date: string) => {
+    console.log("Date clicked:", date);
+    const selectedDate = parseISO(date);
+
+    // Calculate comparison dates (same day of week, previous 4 weeks)
+    const comparisonDatesStr: string[] = [];
+    for (let i = 1; i <= 4; i++) {
+      comparisonDatesStr.push(format(subWeeks(selectedDate, i), 'yyyy-MM-dd'));
+    }
+
+    // Get data for selected day and comparison days
+    const selectedDayData = getDayData(date);
+    const previousWeeksData = comparisonDatesStr.map(compDate => getDayData(compDate));
+
+    setComparisonData({
+      selectedDay: selectedDayData,
+      previousWeeks: previousWeeksData,
+    });
+    setComparisonDate(date);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+      setIsModalOpen(false);
+      setComparisonDate(null);
+      setComparisonData(null);
+  }
 
   return (
     <div className="space-y-8">
@@ -134,9 +242,10 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Revenue Chart Section */}
+      {/* Revenue Chart Section - Pass handleDateClick */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200">
+         {/* ... chart header, buttons ... */}
+         <div className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200">
           <div>
             <h2 className="text-lg font-medium text-gray-900">Revenue Overview</h2>
             <p className="mt-1 text-sm text-gray-500">
@@ -171,7 +280,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="px-4 py-5 sm:p-6">
-          <RevenueChart data={combinedRevenueData} viewMode={viewMode} />
+          <RevenueChart data={combinedRevenueDataArray} viewMode={viewMode} onDateClick={handleDateClick} />
         </div>
       </div>
 
@@ -238,6 +347,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Render the Modal */}
+      <DateComparisonModal 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+          data={comparisonData} 
+      />
+
     </div>
   );
 }
