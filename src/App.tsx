@@ -9,6 +9,7 @@ import Analytics from './pages/Analytics';
 import Forecasting from './pages/Forecasting';
 import Roster from './pages/Roster';
 import Settings from './pages/Settings';
+import FoodSafety from './pages/FoodSafety';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="forecasting" element={<Forecasting />} />
         <Route path="roster" element={<Roster />} />
+        <Route path="food-safety" element={<FoodSafety />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>

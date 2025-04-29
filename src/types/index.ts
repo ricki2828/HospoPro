@@ -94,3 +94,29 @@ export interface RevenueChartDataPoint {
   staffCount?: number;
   lastYearAmount?: number; // Add last year's revenue
 }
+
+// --- Food Safety Types ---
+
+export type TaskFrequency = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annually' | 'Once';
+
+export interface FoodSafetyTask {
+  id: string;
+  name: string;
+  description?: string;
+  frequency: TaskFrequency;
+  // We'll store nextDueDate directly in mock data for simplicity
+  // In a real app, this would often be calculated based on lastCompletedDate + frequency
+  nextDueDate: string; // YYYY-MM-DD format
+  lastCompletedDate?: string; // YYYY-MM-DD format
+  category?: string; // e.g., Cleaning, Temperature, Maintenance
+}
+
+// Optional: Could add TaskLog later
+// export interface TaskLog {
+//   id: string;
+//   taskId: string;
+//   completedAt: Date;
+//   completedByStaffId: string;
+//   notes?: string;
+//   status?: 'Pass' | 'Fail' | 'N/A';
+// }

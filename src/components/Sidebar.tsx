@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, BarChart4, Calendar, Users, TrendingUp, Settings, CupSoda,
-  ClipboardList
+  ClipboardList,
+  ShieldCheck
 } from 'lucide-react';
 
 type SidebarProps = {
@@ -16,6 +17,7 @@ export default function Sidebar({ onCloseSidebar }: SidebarProps) {
     { name: 'Promotions', href: '/promotions', icon: Calendar },
     { name: 'Bookings', href: '/bookings', icon: Users },
     { name: 'Roster', href: '/roster', icon: ClipboardList },
+    { name: 'Food Safety', href: '/food-safety', icon: ShieldCheck },
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Forecasting', href: '/forecasting', icon: TrendingUp },
     { name: 'Settings', href: '/settings', icon: Settings },

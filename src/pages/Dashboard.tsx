@@ -10,6 +10,7 @@ import UpcomingPromotions from '../components/UpcomingPromotions';
 import BookingsList from '../components/BookingsList';
 import ForecastCard from '../components/ForecastCard';
 import RosterSummaryCard from '../components/RosterSummaryCard';
+import UpcomingChecksCard from '../components/UpcomingChecksCard';
 import { 
   revenueData, 
   promos, 
@@ -201,6 +202,9 @@ export default function Dashboard() {
 
           {/* Roster Summary */}
           <RosterSummaryCard />
+
+          {/* Upcoming Food Safety Checks */}
+          <UpcomingChecksCard />
         </div>
 
         <div className="lg:col-span-2 space-y-6">

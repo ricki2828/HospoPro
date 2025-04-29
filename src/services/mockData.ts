@@ -1,5 +1,5 @@
-import { Promo, Booking, Revenue, WeatherData, DayOfWeekTrend, Forecast, StaffMember, Shift } from '../types';
-import { addDays, format, subDays, startOfDay, setHours, setMinutes, subYears, parseISO } from 'date-fns';
+import { Promo, Booking, Revenue, WeatherData, DayOfWeekTrend, Forecast, StaffMember, Shift, FoodSafetyTask } from '../types';
+import { addDays, format, subDays, startOfDay, setHours, setMinutes, subYears, parseISO, addWeeks, addMonths, startOfWeek, endOfDay, subMonths } from 'date-fns';
 
 // Helper function to create dates
 const createDate = (daysFromToday: number): string => {
@@ -423,3 +423,85 @@ export const lastYearRevenueData: Revenue[] = revenueData.map(currentYearData =>
     baseline: Math.round((currentYearData.baseline || 3000) * 0.95) // Assume slightly lower baseline last year
   };
 });
+
+// --- Mock Food Safety Tasks ---
+
+// Helper to calculate next due date based on frequency and last completion
+// For simplicity in mock data, we'll often set nextDueDate directly based on today
+const today = startOfDay(new Date());
+
+export const mockFoodSafetyTasks: FoodSafetyTask[] = [
+  {
+    id: 'fst1',
+    name: 'Check Fridge Temperatures (Walk-in)',
+    frequency: 'Daily',
+    category: 'Temperature',
+    lastCompletedDate: createDate(-1), // Yesterday
+    nextDueDate: createDate(0), // Today
+  },
+  {
+    id: 'fst2',
+    name: 'Check Freezer Temperatures',
+    frequency: 'Daily',
+    category: 'Temperature',
+    // No last completion, assume due today
+    nextDueDate: createDate(0), // Today
+  },
+  {
+    id: 'fst3',
+    name: 'Clean Coffee Machine',
+    frequency: 'Daily',
+    category: 'Cleaning',
+    lastCompletedDate: createDate(-1),
+    nextDueDate: createDate(0),
+  },
+   {
+    id: 'fst4',
+    name: 'Weekly Staff Hygiene Review',
+    frequency: 'Weekly',
+    category: 'Staff Training',
+    // Assume last done last Monday, due next Monday
+    lastCompletedDate: format(startOfWeek(subDays(today, 7), { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
+    nextDueDate: format(startOfWeek(addDays(today, 7), { weekStartsOn: 1 }), 'yyyy-MM-dd'), // Next Monday
+  },
+  {
+    id: 'fst5',
+    name: 'Deep Clean Fryers',
+    frequency: 'Weekly',
+    category: 'Cleaning',
+    lastCompletedDate: format(subDays(today, 3), 'yyyy-MM-dd'), // 3 days ago
+    nextDueDate: format(addDays(subDays(today, 3), 7), 'yyyy-MM-dd'), // 4 days from now
+  },
+   {
+    id: 'fst6',
+    name: 'Monthly Pest Control Check',
+    frequency: 'Monthly',
+    category: 'Maintenance',
+    lastCompletedDate: format(subMonths(today, 1), 'yyyy-MM-dd'), // Last month
+    nextDueDate: format(addMonths(today, 1), 'yyyy-MM-dd'), // Next month same day
+  },
+  {
+    id: 'fst7',
+    name: 'Rangehood Filter Clean',
+    frequency: 'Monthly',
+    category: 'Cleaning',
+    lastCompletedDate: format(subDays(today, 10), 'yyyy-MM-dd'), // 10 days ago
+    nextDueDate: format(addMonths(subDays(today, 10), 1), 'yyyy-MM-dd'), // ~20 days from now
+  },
+  {
+    id: 'fst8',
+    name: 'Annual Fire Safety Inspection',
+    frequency: 'Annually',
+    category: 'Maintenance',
+    // Assume due in 2 months
+    nextDueDate: format(addMonths(today, 2), 'yyyy-MM-dd'), 
+  },
+   {
+    id: 'fst9',
+    name: 'Review Food Safety Plan',
+    frequency: 'Once',
+    category: 'Documentation',
+    // Specific one-off due date
+    nextDueDate: createDate(14), // In 2 weeks
+  },
+];
