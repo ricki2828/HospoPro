@@ -18,7 +18,7 @@ import {
 import type { Tick, ActiveElement, ChartEvent } from 'chart.js';
 import { Chart, getElementsAtEvent } from 'react-chartjs-2';
 import { RevenueChartDataPoint } from '../types';
-import { format, parseISO, startOfWeek, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfMonth, isWithinInterval, subYears } from 'date-fns';
 import { useRef } from 'react';
 import type { MouseEvent } from 'react';
 
@@ -38,7 +38,7 @@ ChartJS.register(
 
 interface RevenueChartProps {
   data: RevenueChartDataPoint[];
-  viewMode: 'week' | 'month';
+  viewMode: 'week' | 'month' | 'year';
   onDateClick: (date: string) => void;
 }
 
@@ -68,72 +68,76 @@ export default function RevenueChart({ data: chartInputData, viewMode, onDateCli
 
   if (viewMode === 'week') {
     displayData = filteredData.slice(-7);
-  } else {
+  } else if (viewMode === 'month') {
     displayData = filteredData.slice(-30);
+  } else {
+    displayData = filteredData.slice(-365);
   }
 
-  const data: ChartData<any> = {
+  const chartDataConfig: ChartData<any> = {
     labels: displayData.map(item => item.date),
     datasets: [
       {
         type: 'line' as const,
         label: 'Actual Revenue',
-        data: displayData.map((item) => item.amount),
+        data: displayData.map((item) => item.amount ?? null),
         borderColor: '#4338CA',
         backgroundColor: '#4338CA',
-        pointRadius: 3,
-        tension: 0.2,
+        pointRadius: viewMode === 'year' ? 1 : 3,
+        tension: viewMode === 'year' ? 0.4 : 0.2,
         yAxisID: 'y',
         order: 1,
       },
       {
         type: 'line' as const,
         label: 'Last Year Revenue',
-        data: displayData.map((item) => item.lastYearAmount),
+        data: displayData.map((item) => item.lastYearAmount ?? null),
         borderColor: '#9CA3AF',
         borderDash: [4, 4],
-        pointRadius: 0,
-        tension: 0.2,
+        pointRadius: viewMode === 'year' ? 0 : 0,
+        tension: viewMode === 'year' ? 0.4 : 0.2,
         yAxisID: 'y',
         order: 2,
       },
-      {
-        type: 'line' as const,
-        label: 'Forecast',
-        data: displayData.map((item) => item.forecast || null),
-        borderColor: '#0D9488',
-        backgroundColor: '#0D9488',
-        pointRadius: 3,
-        pointStyle: 'triangle',
-        tension: 0.2,
-        borderDash: [5, 5],
-        yAxisID: 'y',
-        order: 1,
-      },
-      {
-        type: 'line' as const,
-        label: 'Baseline',
-        data: displayData.map((item) => item.baseline),
-        borderColor: '#F59E0B',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-        pointRadius: 0,
-        tension: 0.2,
-        fill: true,
-        yAxisID: 'y',
-        order: 3,
-      },
-      {
-        type: 'bar' as const,
-        label: 'Staff Count',
-        data: displayData.map((item) => item.staffCount),
-        backgroundColor: 'rgba(156, 163, 175, 0.4)',
-        borderColor: 'rgba(156, 163, 175, 0.6)',
-        borderWidth: 1,
-        yAxisID: 'y1',
-        order: 4,
-        barPercentage: 0.6,
-        categoryPercentage: 0.7,
-      },
+      ...(viewMode !== 'year' ? [
+        {
+          type: 'line' as const,
+          label: 'Forecast',
+          data: displayData.map((item) => item.forecast ?? null),
+          borderColor: '#0D9488',
+          backgroundColor: '#0D9488',
+          pointRadius: 3,
+          pointStyle: 'triangle',
+          tension: 0.2,
+          borderDash: [5, 5],
+          yAxisID: 'y',
+          order: 1,
+        },
+        {
+          type: 'line' as const,
+          label: 'Baseline',
+          data: displayData.map((item) => item.baseline ?? null),
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          pointRadius: 0,
+          tension: 0.2,
+          fill: true,
+          yAxisID: 'y',
+          order: 3,
+        },
+        {
+          type: 'bar' as const,
+          label: 'Staff Count',
+          data: displayData.map((item) => item.staffCount ?? 0),
+          backgroundColor: 'rgba(156, 163, 175, 0.4)',
+          borderColor: 'rgba(156, 163, 175, 0.6)',
+          borderWidth: 1,
+          yAxisID: 'y1',
+          order: 4,
+          barPercentage: 0.6,
+          categoryPercentage: 0.7,
+        },
+      ] : []),
     ],
   };
 
@@ -153,6 +157,7 @@ export default function RevenueChart({ data: chartInputData, viewMode, onDateCli
   const options: ChartOptions<any> = {
     responsive: true,
     maintainAspectRatio: false,
+    onClick: handleClick,
     plugins: {
       legend: {
         position: 'top',
@@ -196,43 +201,56 @@ export default function RevenueChart({ data: chartInputData, viewMode, onDateCli
           },
         },
       },
-      y1: {
-        type: 'linear' as const,
-        display: true,
-        position: 'right' as const,
-        beginAtZero: true,
-        grid: {
-          drawOnChartArea: false,
-        },
-        ticks: {
-          precision: 0,
-          callback: function(value: string | number) {
-            return Number(value).toFixed(0) + ' Staff';
+      ...(viewMode !== 'year' ? {
+        y1: {
+          type: 'linear' as const,
+          display: true,
+          position: 'right' as const,
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          ticks: {
+            precision: 0,
+            callback: function(value: string | number) {
+              return Number(value).toFixed(0) + ' Staff';
+            },
           },
         },
-      },
+      } : { y1: { display: false } }),
       x: {
         grid: {
           display: false,
         },
         ticks: {
           callback: function(this: Tick, tickValue: string | number, index: number): string | string[] {
-            const dateStr = displayData[index]?.date;
-            if (!dateStr) return '';
-
-            const dateLabel = format(parseISO(dateStr), viewMode === 'week' ? 'EEE dd MMM' : 'dd MMM');
+            const dataPoint = displayData[index];
+            if (!dataPoint || !dataPoint.date) return ''; 
             
-            const weatherIcon = displayData[index]?.weatherIcon;
-            const emoji = getWeatherEmoji(weatherIcon);
+            let dateLabel = dataPoint.date; // Fallback label
+            try {
+                const parsedDate = parseISO(dataPoint.date);
+                if (viewMode === 'week') {
+                    dateLabel = format(parsedDate, 'EEE dd MMM');
+                } else if (viewMode === 'month') {
+                    dateLabel = format(parsedDate, 'dd MMM');
+                } else { // year
+                    dateLabel = format(parsedDate, 'MMM yy');
+                }
+            } catch (e) {
+                console.error("Error parsing date for chart label:", dataPoint.date, e);
+                // Keep dateLabel as the original string on error
+            }
+            
+            // No weather icon for year view
+            const emoji = viewMode !== 'year' ? getWeatherEmoji(dataPoint.weatherIcon) : ''; 
 
-            return [dateLabel, emoji];
+            // Return label or array [label, emoji]
+            return emoji ? [dateLabel, emoji] : dateLabel;
           },
-          font: {
-             size: 11, 
-          },
-           maxRotation: 0,
-           minRotation: 0,
-           autoSkip: false,
+          font: { size: 11 },
+          maxRotation: viewMode === 'year' ? 45 : 0, 
+          minRotation: viewMode === 'year' ? 45 : 0,
+          autoSkip: true, 
+          maxTicksLimit: viewMode === 'year' ? 12 : undefined, 
         },
       },
     },
@@ -245,7 +263,7 @@ export default function RevenueChart({ data: chartInputData, viewMode, onDateCli
 
   return (
     <div className="h-96">
-      <Chart ref={chartRef} type='bar' data={data} options={options} onClick={handleClick} />
+      <Chart ref={chartRef} type='bar' data={chartDataConfig} options={options} onClick={handleClick} />
     </div>
   );
 }

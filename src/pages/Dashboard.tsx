@@ -33,7 +33,7 @@ const formatNZD = (value: number) => {
 };
 
 export default function Dashboard() {
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('month');
   const [liveWeatherData, setLiveWeatherData] = useState<WeatherData[]>([]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
   const [comparisonDate, setComparisonDate] = useState<string | null>(null);
@@ -253,7 +253,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="mt-3 sm:mt-0">
-            <div className="flex rounded-md shadow-sm overflow-hidden" role="group">
+            <div className="inline-flex rounded-md shadow-sm overflow-hidden" role="group">
               <button
                 type="button"
                 className={`px-4 py-2 text-sm font-medium border ${
@@ -276,6 +276,17 @@ export default function Dashboard() {
               >
                 Month
               </button>
+              <button
+                type="button"
+                className={`px-4 py-2 text-sm font-medium border border-l-0 rounded-r-md ${
+                  viewMode === 'year'
+                    ? 'bg-primary-50 text-primary-700 border-primary-200'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+                onClick={() => setViewMode('year')}
+              >
+                Year
+              </button>
             </div>
           </div>
         </div>
@@ -291,7 +302,7 @@ export default function Dashboard() {
           <div className="bg-white shadow rounded-lg overflow-hidden min-h-[200px]">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-lg font-medium text-gray-900">
-                {viewMode === 'week' ? '7-Day Weather' : 'Monthly Weather'}
+                {viewMode === 'week' ? '7-Day Weather' : viewMode === 'month' ? 'Monthly Weather' : 'Yearly Weather'}
               </h2>
               <Droplets className="h-5 w-5 text-gray-400" />
             </div>
@@ -337,7 +348,7 @@ export default function Dashboard() {
           {/* Forecast Cards */}
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-3">
-              Revenue Forecast ({viewMode === 'week' ? 'Next 4 Days' : 'Next 14 Days'})
+              Revenue Forecast ({viewMode === 'week' ? 'Next 4 Days' : viewMode === 'month' ? 'Next 14 Days' : 'Next Year'})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {upcomingForecasts.map((forecast) => (
